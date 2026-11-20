@@ -16,18 +16,30 @@ import { NodeOverlay, coordinates, select } from "../features/nodes";
 import { Properties } from "../features/appearance";
 import { Layers, translateSelected } from "../features/layers";
 import { ExportBar, restore, save, storageStatus } from "../features/export";
+import {
+  ConstraintPanel,
+  ConstraintOverlay,
+  clearPicks,
+  lastResidual,
+  solveCommit,
+  solvePreview,
+  status,
+} from "../features/constraints";
 import type { Shape } from "../shared/types";
 if (!restore()) seed();
+solveCommit();
 doc.selected = doc.shapes.length
   ? [doc.shapes[Math.min(3, doc.shapes.length - 1)].id]
   : [];
-watch(() => doc.shapes, save, { deep: true });
+watch(() => [doc.shapes, doc.constraints], save, { deep: true });
+watch(() => doc.selected, clearPicks);
 const paths = computed(() => doc.shapes.map(path));
 let drawing: Shape | undefined;
 watch(
   () => doc.tool,
   () => {
     drawing = undefined;
+    clearPicks();
   },
 );
 watch(revision, () => {
@@ -57,15 +69,24 @@ function down(e: PointerEvent) {
     select(id, e.shiftKey);
     if (doc.tool === "nodes") return;
     let last = p;
+    let moved = false;
+    const pinned = new Set(doc.selected);
     const f = (ev: PointerEvent) => {
       const q = coordinates(ev, svg);
+      moved = true;
       translateSelected(q.x - last.x, q.y - last.y);
       last = q;
+      // Continuous preview while dragging; the dragged selection is
+      // pinned so the solver never fights the pointer.
+      solvePreview({ pinnedShapes: pinned });
     };
     window.addEventListener("pointermove", f);
     window.addEventListener(
       "pointerup",
-      () => window.removeEventListener("pointermove", f),
+      () => {
+        window.removeEventListener("pointermove", f);
+        if (moved) solveCommit();
+      },
       { once: true },
     );
   } else doc.selected = [];
@@ -76,6 +97,25 @@ function finish() {
 }
 window.addEventListener("keydown", (e) => {
   if (e.key === "Enter" || e.key === "Escape") finish();
+});
+function doUndo() {
+  undo();
+  solveCommit();
+}
+function doRedo() {
+  redo();
+  solveCommit();
+}
+const statusText = computed(() => {
+  if (!doc.constraints.length)
+    return doc.tool === "pen"
+      ? "Click / drag to draw · Enter to finish"
+      : "Shift + click to select multiple · Drag to move";
+  if (status.value === "preview")
+    return `◌ preview · residual ${lastResidual.value.toFixed(3)}`;
+  if (status.value === "conflict")
+    return "⚠ constraint conflict — last usable result kept";
+  return "✓ constraints satisfied";
 });
 </script>
 <template>
@@ -88,14 +128,14 @@ window.addEventListener("keydown", (e) => {
     <div class="left">
       <h5>PROJECT <span>＋</span></h5>
       <p class="project">▣ Bloom / Artboard 01</p>
-      <Tools /><Layers />
+      <Tools /><Layers /><ConstraintPanel />
       <p class="signature">✧ Designed to explore.</p>
     </div>
     <main>
       <div class="toolbar">
         <span>Artboard 01　<small>800 × 600</small></span>
         <div>
-          <button @click="undo">↶</button><button @click="redo">↷</button
+          <button @click="doUndo">↶</button><button @click="doRedo">↷</button
           ><button @click="doc.zoom = Math.max(0.4, doc.zoom - 0.1)">−</button
           >{{ Math.round(doc.zoom * 100) }}%<button
             @click="doc.zoom = Math.min(1.5, doc.zoom + 0.1)"
@@ -126,16 +166,13 @@ window.addEventListener("keydown", (e) => {
             :stroke-width="s.width"
             :opacity="s.opacity"
           />
+          <ConstraintOverlay />
           <NodeOverlay />
         </svg>
       </div>
       <footer>
         <span>● {{ storageStatus }}</span
-        ><span>{{
-          doc.tool === "pen"
-            ? "Click / drag to draw · Enter to finish"
-            : "Shift + click to select multiple · Drag to move"
-        }}</span
+        ><span :class="status">{{ statusText }}</span
         ><span>{{ doc.selected.length }} selected</span>
       </footer>
     </main>

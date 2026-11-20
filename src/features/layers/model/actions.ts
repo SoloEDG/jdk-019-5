@@ -1,4 +1,5 @@
 import { beginEdit } from "../../drawing";
+import { pruneConstraints } from "../../constraints";
 import { doc } from "../../../shared/document";
 export function group() {
   beginEdit();
@@ -34,5 +35,6 @@ export function reorder(delta: number) {
 export function remove() {
   beginEdit();
   doc.shapes = doc.shapes.filter((s) => !doc.selected.includes(s.id));
+  pruneConstraints();
   doc.selected = [];
 }

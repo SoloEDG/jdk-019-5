@@ -259,6 +259,82 @@ aside p {
 .tip small {
   font-size: 9px;
 }
+.constraints {
+  border-top: 1px solid #eee7f3;
+  padding: 12px;
+}
+.constraints h3 {
+  font-size: 12px;
+  padding: 0 7px;
+}
+.constraint-actions {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 15px 0 8px;
+}
+.constraint-actions button {
+  font-size: 10px;
+  padding: 7px 9px;
+}
+.constraint-actions button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.constraints .hint {
+  font-size: 10px;
+  color: #b3a6bf;
+  padding: 0 7px;
+  line-height: 1.6;
+}
+.constraint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  padding: 7px 8px;
+  margin: 3px 0;
+  border-radius: 6px;
+  background: #f6f2fb;
+}
+.constraint.broken {
+  background: #fbeaea;
+  color: #b63a3a;
+}
+.constraint .c-icon {
+  font-size: 12px;
+}
+.constraint .c-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.constraint input[type="number"] {
+  width: 52px;
+  padding: 4px;
+  font-size: 10px;
+}
+.constraint .c-measure {
+  color: #a294ae;
+}
+.constraint .c-del {
+  padding: 2px 5px;
+  font-size: 9px;
+}
+.constraint i {
+  font-style: normal;
+}
+.note {
+  font-size: 10px;
+  color: #a89bb2;
+}
+footer .preview {
+  color: #8055d5;
+}
+footer .conflict {
+  color: #d64545;
+}
 @media (max-width: 1250px) {
   .stage {
     justify-content: flex-start;

@@ -2,6 +2,7 @@
 import { active } from "../model/active";
 import { style } from "../model/style";
 import { colors } from "../lib/colors";
+import { setFixed } from "../../constraints";
 </script>
 <template>
   <aside>
@@ -63,7 +64,18 @@ import { colors } from "../lib/colors";
           @change="
             style('closed', ($event.target as HTMLInputElement).checked)
           " /></label
-    ></template>
+      ><label
+        >Fixed
+        <input
+          aria-label="Fixed"
+          type="checkbox"
+          :checked="!!active.fixed"
+          @change="setFixed(($event.target as HTMLInputElement).checked)"
+      /></label>
+      <p class="note" v-if="active.fixed">
+        Fixed shapes are constants for the constraint solver.
+      </p></template
+    >
     <p v-else>Select an object to edit its appearance.</p>
     <div class="tip">
       ✦ Make room for ideas.<br /><small

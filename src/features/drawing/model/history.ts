@@ -3,13 +3,18 @@ import { doc } from "../../../shared/document";
 const past: string[] = [];
 const future: string[] = [];
 export const revision = ref(0);
+function snapshot() {
+  return JSON.stringify({ shapes: doc.shapes, constraints: doc.constraints });
+}
 export function beginEdit() {
-  past.push(JSON.stringify(doc.shapes));
+  past.push(snapshot());
   if (past.length > 100) past.shift();
   future.length = 0;
 }
-function install(snapshot: string) {
-  doc.shapes = JSON.parse(snapshot);
+function install(state: string) {
+  const s = JSON.parse(state);
+  doc.shapes = s.shapes;
+  doc.constraints = s.constraints ?? [];
   doc.selected = doc.selected.filter((id) =>
     doc.shapes.some((s) => s.id === id),
   );
@@ -18,14 +23,14 @@ function install(snapshot: string) {
 export function undo() {
   const state = past.pop();
   if (state) {
-    future.push(JSON.stringify(doc.shapes));
+    future.push(snapshot());
     install(state);
   }
 }
 export function redo() {
   const state = future.pop();
   if (state) {
-    past.push(JSON.stringify(doc.shapes));
+    past.push(snapshot());
     install(state);
   }
 }
